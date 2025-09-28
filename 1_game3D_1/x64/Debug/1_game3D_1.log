@@ -1,0 +1,3 @@
+﻿  main.cpp
+D:\work_Cpp\1_game3D_1\1_game3D_1\main.cpp(159,28): warning C4244: “初始化”: 从“double”转换到“float”，可能丢失数据
+  1_game3D_1.vcxproj -> D:\work_Cpp\1_game3D_1\x64\Debug\1_game3D_1.exe
