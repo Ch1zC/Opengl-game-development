@@ -17,7 +17,7 @@ CameraController::CameraController():
     pitch(0.0f),
     lastX(0.0),
     lastY(0.0),
-    cameraPos(glm::vec3(0.0f, 10.0f, 3.0f)),
+    cameraPos(glm::vec3(0.0f, 1.71f, 3.0f)),
     cameraFront(glm::vec3(0.0f, 0.0f, -1.0f)),
     cameraUp(glm::vec3(0.0f, 1.0f, 0.0f))
 {}
@@ -61,6 +61,9 @@ void CameraController::mouse_callback(double xpos, double ypos) {
 }
 
 bool CameraController::playerModelChecker(const AABB& playerAABB, const std::vector<SceneObject>& sceneObjects) {
+    // 拿人物AABB去和场景所有objects的AABB做重叠判断，以达到无法穿模的效果
+    // return true:  穿模了
+    // return false: 没穿
 
     AABB_class AABBClass;
 
@@ -69,16 +72,23 @@ bool CameraController::playerModelChecker(const AABB& playerAABB, const std::vec
         // 计算这个物体在世界中的AABB
         AABB objectAABB = AABBClass.calculateWorldAABB(object.resource->localAABB, object.modelMatrix);
 
-        if (AABBClass.checkAABBCollision(playerAABB, objectAABB)) return true; // 穿模，直接不行
 
-        return false;
+        if (AABBClass.checkAABBCollision(playerAABB, objectAABB)) return true;
     }
+
+    return false;
 }
 
 void CameraController::processInput(GLFWwindow* window, const std::vector<SceneObject>& sceneObjects) {
+    // camera controller core code
 
     float cameraSpeed = 4.5f * deltaTime;
     float cameraSpeed_running = 8.5f * deltaTime;
+
+    glm::vec3 moveForward = glm::vec3(cameraFront.x , 0.0f, cameraFront.z);
+    moveForward = glm::normalize(moveForward);
+
+    glm::vec3 moveRight = glm::normalize(glm::cross(moveForward, glm::vec3(0.0f, 1.0f, 0.0f)));
 
     glm::vec3 moveDirection(0.0f);   // 用以存储下次移动数据，检测AABB无重叠等问题后再加值到cameraPos以移动
 
@@ -106,8 +116,8 @@ void CameraController::processInput(GLFWwindow* window, const std::vector<SceneO
         moveDirection = glm::normalize(moveDirection) * cameraSpeed; // (除跟随帧率之外)利用normalize速度调制器，控制斜向移动速度依然为1.0
 
         AABB playerAABB;
-        playerAABB.min = glm::vec3(-0.4f, -1.7f, -0.4f); // player 脚   y = -1.7
-        playerAABB.max = glm::vec3(0.4f, 0.1f, 0.4f);    // player 头顶 y = 0.1
+        playerAABB.min = glm::vec3(-0.3f, -1.7f, -0.2f); // player 脚   y = -1.7
+        playerAABB.max = glm::vec3(0.3f, 0.1f, 0.2f);    // player 头顶 y = 0.1
 
         //x
         cameraPos.x += moveDirection.x;
@@ -118,12 +128,12 @@ void CameraController::processInput(GLFWwindow* window, const std::vector<SceneO
         }
 
         //y
-        cameraPos.y += moveDirection.y;
+        /*cameraPos.y += moveDirection.y;
         AABB playerAABB_Y = { cameraPos + playerAABB.min, cameraPos + playerAABB.max };
 
         if (playerModelChecker(playerAABB_Y, sceneObjects)) {
             cameraPos.y -= moveDirection.y;
-        }
+        }*/
 
         //z
         cameraPos.z += moveDirection.z;

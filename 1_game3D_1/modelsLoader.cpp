@@ -20,8 +20,10 @@ modelsLoader_struct ModelsLoader::load(std::string objPath) {
     
     //                                               models obj file's path-.                  .- models mtl file's path
     if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, objPath.c_str(), parentDir.c_str())) {
-        throw std::runtime_error(warn + err);
+        throw std::runtime_error(warn + err); //在这出错先看mtl和obj文件名对不对且存不存在，然后看txt路径对不对
     }
+
+    std::cout << "[Model]  [Loaded] path: " + objPath << std::endl;
 
     std::vector<float> vertices;
 
@@ -79,7 +81,7 @@ modelsLoader_struct ModelsLoader::load(std::string objPath) {
         for (const auto& material : materials) {
             if (!material.diffuse_texname.empty()) {
                 std::string texture_path = material.diffuse_texname;
-                std::string texPath = parentDir + "/" + texture_path;
+                std::string texPath = parentDir + texture_path;
                 diffuseMap = loadTexture(texPath.c_str());
 
                 textureLoaded = true;
@@ -119,10 +121,10 @@ unsigned int ModelsLoader::loadTexture(const char* path) {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
         stbi_image_free(data);
-        std::cout << "Texture loaded at path: " << path << std::endl;
+        std::cout << "[Texture][Loaded] path: " << path << std::endl;
     }
     else {
-        std::cout << "Texture failed to load at path: " << path << std::endl;
+        std::cout << "-FAILED-[Texture] path: " << path << std::endl;
     }
 
     return textureID;

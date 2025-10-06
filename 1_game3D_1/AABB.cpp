@@ -7,12 +7,18 @@
 
 bool AABB_class::checkAABBCollision(const AABB& a, const AABB& b) {
     // 在所有轴上都存在重叠，才算碰撞
+    // return ture  = 重叠了
+    // return false = 没重叠
+
     return (a.min.x <= b.max.x && a.max.x >= b.min.x) &&
         (a.min.y <= b.max.y && a.max.y >= b.min.y) &&
         (a.min.z <= b.max.z && a.max.z >= b.min.z);
 }
 
 AABB AABB_class::calculateWorldAABB(const AABB& localAABB, const glm::mat4& modelMatrix) {
+    // 计算物体AABB最大、最小点坐标
+
+
     // 获取本地AABB的8个角点
     std::vector<glm::vec3> corners = {
         // 后面四个角

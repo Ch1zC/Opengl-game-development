@@ -203,56 +203,55 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 }
 
 std::vector<ModelsNeedToShow> loadLevelData(const std::string& filePath) {
+    // 读取场景txt，将各个模型数据转换存储到后台
 
     std::vector<ModelsNeedToShow> dataVector;
     std::ifstream file(filePath);
 
     if (!file.is_open()) {
-        std::cerr << "level file missing: " << filePath << std::endl;
+        std::cerr << "-FAILED to load-[Txt] path: " << filePath << std::endl;
         return dataVector;
     }
 
     std::string line;
     std::string currentPath;
-    glm::vec3 pos(0.0f), rot(0.0f), scale(1.0f);
+    glm::mat4 blenderMatrix(1.0f); // 用于存储从文件读取的原始Blender矩阵
 
     while (std::getline(file, line)) {
 
         if (line.rfind("MODEL:", 0) == 0) {
-
             currentPath = line.substr(6);
         }
-        else if (line.rfind("POS:", 0) == 0) {
 
-            sscanf_s(line.substr(4).c_str(), "%f,%f,%f", &pos.x, &pos.y, &pos.z);
-        }
-        else if (line.rfind("ROT:", 0) == 0) {
+        else if (line.rfind("MATRIX:", 0) == 0) {
+            std::string matrixData = line.substr(7);
+            std::stringstream ss(matrixData);
+            std::string value;
 
-            sscanf_s(line.substr(4).c_str(), "%f,%f,%f", &rot.x, &rot.y, &rot.z);
-        }
-        else if (line.rfind("SCALE:", 0) == 0) {
+            // 将16个浮点数读入一个临时数组
+            float matrixElements[16];
+            int i = 0;
+            while (std::getline(ss, value, ',') && i < 16) {
+                matrixElements[i++] = std::stof(value);
+            }
 
-            sscanf_s(line.substr(6).c_str(), "%f,%f,%f", &scale.x, &scale.y, &scale.z);
+            // 创建vec4矩阵，并将行主序转到opengl的列主序
+            blenderMatrix = glm::transpose(glm::make_mat4(matrixElements));
         }
         else if (line == "---") {
 
-            // 遇到分隔符 读取完毕
-            glm::mat4 model = glm::mat4(1.0f);
-            model = glm::translate(model, pos);
-            model = glm::rotate(model, rot.z, glm::vec3(0.0, 0.0, 1.0));
-            model = glm::rotate(model, rot.y, glm::vec3(0.0, 1.0, 0.0));
-            model = glm::rotate(model, rot.x, glm::vec3(1.0, 0.0, 0.0));
-            model = glm::scale (model, scale);
+            // 转换坐标，从Z头顶转成Y头顶（尝试导出直接Y头顶，省去这行）
+            glm::mat4 coordSystemFix = glm::rotate(glm::mat4(1.0f), glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 
-            dataVector.push_back({ currentPath, model });
+            // 二者相乘，得出最终在世界中的位置
+            glm::mat4 finalModelMatrix = coordSystemFix * blenderMatrix;
 
-            // 重置
-            pos   = glm::vec3(0.0f);
-            rot   = glm::vec3(0.0f);
-            scale = glm::vec3(1.0f);
+
+            dataVector.push_back({ currentPath, finalModelMatrix });
+
+            blenderMatrix = glm::mat4(1.0f);
         }
     }
-
     return dataVector;
 }
 
